@@ -1,0 +1,43 @@
+miningContext:
+ class: ProccessModel::MiningContext
+    
+parallelCleaningPhase:
+ class: ProccessModel::ParallelCleaningPhase
+ args:
+  desc: 'Parallel Cleaning Phase'
+  context: {$ref: miningContext}
+  inputFilePath: '/tmp/access_log_20140530/accesslog_443_h1'
+  cleanedFilePath: '/tmp/access_log_20140530/accesslog_cleaned.log'
+
+  
+movingMeanBasedOutlier:
+ class: TrendStats::MovingMeanBasedOutlier
+ args:
+  windowSize: 4
+  coeficient: 2
+  
+objectStatsHandler:
+ class: ProccessModel::ObjectStatsHandler
+ args:
+  #attributes: ['uri', 'referrer', 'ip', 'returnCode', 'userAgent', 'uri_ip']
+  attributes: ['referrer', 'uri']
+  timeWindowSize: 60
+  analysisInitialTime: '30/05/2014 13:00'
+  analysisFinalTime: '30/05/2014 13:00'
+
+statsPhase:
+ class: ProccessModel::GenerateStatsPhase
+ args:
+  desc: 'Analyse Referrer Phase'
+  context: {$ref: miningContext}
+  #inputFilePath: '/tmp/access_log_20140530/accesslog_cleaned.log'
+  inputFilePath: '/tmp/access_log_20140530/accesslog_teste.csv'
+  outputDir: '/tmp'
+  objectHandler: {$ref: objectStatsHandler}
+  outlierFilter: {$ref: movingMeanBasedOutlier}
+  numProcessors: 4
+  
+phaseContainer:
+ class: ProccessModel::PhaseContainer
+ args:
+  phases: [{$ref: statsPhase}]
